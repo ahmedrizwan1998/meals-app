@@ -13,6 +13,7 @@ function Search() {
   function handleSubmit(event) {
     event.preventDefault();
     if (text) {
+      console.log(text)
       setSearchTerm(text);
       setText('');
     }

@@ -16,6 +16,17 @@ const AppProvider = ({children}) => {
     const [showModal, setShowModal] = useState(false);
     const [selectedMeal, setSelectedMeal] = useState(null);
 
+    const getFavoritesFromLocaleStorage = () => {
+        let favorites = localStorage.getItem('favorites');
+        if (favorites) {
+            favorites = JSON.parse(localStorage.getItem('favorites'));
+        } else {
+            favorites = [];
+        }
+        return favorites
+    };
+    const [favorites, setFavorites] = useState(getFavoritesFromLocaleStorage());
+
     const fetchMeal = async (url) => {
         // const response = await axios(url);
         setLoading(true);
@@ -31,29 +42,51 @@ const AppProvider = ({children}) => {
     };
     const fetchRandomMeal = () => {
         fetchMeal(randomMealUrl)
-    }
+    };
 
-    const selectMeal = (idMeal) => {
+    const selectMeal = (idMeal, favoriteMeal) => {
         let meal;
-        meal = meals.find((meal) => meal.idMeal === idMeal);
+        if (favoriteMeal) {
+            meal = favorites.find((meal) => meal.idMeal === idMeal);
+        } else {
+            meal = meals.find((meal) => meal.idMeal === idMeal);
+        }
+        
         setSelectedMeal(meal);
         setShowModal(true);
-    }
+    };
     const closeModal = () => {
         setShowModal(false);
-    }
+    };
+    
+    const addToFavorites = (idMeal) => {
+        const alreadyFavorites = favorites.find((meal) => meal.idMeal === idMeal);
+        if (alreadyFavorites) {
+            return
+        }
+        const meal = meals.find((meal) => meal.idMeal === idMeal);
+        const updatedFavorites = [...favorites, meal];
+        setFavorites(updatedFavorites);
+        localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+    };
+    const removeFavorites = (idMeal) => {
+        const updatedFavorites = favorites.filter((meal) => meal.idMeal !== idMeal);
+        setFavorites(updatedFavorites);
+        localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+    };
+
     useEffect(() => {
         fetchMeal(allMealsUrl)
-    },[searchTerm]);
-
+    },[]);
     useEffect(() => {
         if (!searchTerm) {
             return
         }
         fetchMeal(`${allMealsUrl}${searchTerm}`);
     },[searchTerm]);
+    
     return (
-        <AppContext.Provider value={{meals, loading, setSearchTerm, fetchRandomMeal, showModal, selectMeal, selectedMeal, closeModal}}>
+        <AppContext.Provider value={{meals, loading, setSearchTerm, fetchRandomMeal, showModal, selectMeal, selectedMeal, closeModal, addToFavorites, removeFavorites, favorites}}>
             {children}
         </AppContext.Provider>
     )
